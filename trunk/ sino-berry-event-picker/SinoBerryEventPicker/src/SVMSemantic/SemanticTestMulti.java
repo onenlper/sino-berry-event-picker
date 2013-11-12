@@ -3,15 +3,13 @@ package SVMSemantic;
 import java.io.FileWriter;
 import java.util.ArrayList;
 
-import ACE.ParseResult;
-
 import mention.Element;
-import mention.Entity;
 import mention.EntityMention;
 import mentionDetection.CRFMention;
 import model.stanford.StanfordXMLReader;
 import util.Common;
 import util.ace.ACECommon;
+import ACE.ParseResult;
 
 /*
  * classify subtype directly
@@ -30,10 +28,10 @@ public class SemanticTestMulti {
 		ArrayList<ParseResult> parseResults = StanfordXMLReader.readPR(filename
 				+ ".xml", content);
 
-		ArrayList<Element> nerElementses = ACECommon
-				.getSemanticsFromOneCRFFile(filename + ".ner", content);
+		ArrayList<Element> ner = ACECommon.getSemanticsFromOneCRFFile(filename
+				+ ".ner", content);
 
-		CRFMention crfMention = new CRFMention();
+		CRFMention crfMention = new CRFMention(filename + ".mention", content);
 		ArrayList<EntityMention> ems = crfMention.getMentions();
 		SVMSemanticFeature.semDicFeatures = Common.readFile2Map("semantic_dic"
 				+ args[0]);
@@ -64,10 +62,8 @@ public class SemanticTestMulti {
 		// }
 
 		for (EntityMention em : ems) {
-			String str = SVMSemanticFeature.semanticFeature(em, false,
-					plainText, 0, ners, parseResults);
-			String type = em.semClass;
-			String subType = em.subType;
+			String str = SVMSemanticFeature.semanticFeature(em, false, content,
+					0, ner, parseResults);
 
 			typeFw.write("1 " + str + "\n");
 			subTypeFw.write("1 " + str + "\n");

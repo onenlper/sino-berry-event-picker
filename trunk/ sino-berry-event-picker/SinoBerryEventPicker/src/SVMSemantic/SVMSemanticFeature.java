@@ -62,7 +62,7 @@ public class SVMSemanticFeature {
 		subTypes2.put("wea", str7);
 		loc_suffix
 				.addAll(Common
-						.getLines("/shared/mlrdir1/disk1/home/yzcchen/workspace/ACL12/src/dict/loc_suffix"));
+						.getLines(ACECommon.class.getResourceAsStream("/dict/loc_suffix")));
 	}
 
 	public static HashMap<String, String[]> subTypes2;

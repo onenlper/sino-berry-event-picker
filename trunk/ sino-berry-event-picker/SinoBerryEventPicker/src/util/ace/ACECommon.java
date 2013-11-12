@@ -106,25 +106,35 @@ public class ACECommon {
 	}
 
 	public static HashSet<String> locations = Common
-			.readFile2Set(Common.dicPath + "location2");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/location2"));
 	public static HashSet<String> orgs_intl = Common
-			.readFile2Set(Common.dicPath + "orgs_intl");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/orgs_intl"));
 	public static HashSet<String> proper_industry = Common
-			.readFile2Set(Common.dicPath + "propernames_industry");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/propernames_industry"));
 	public static HashSet<String> proper_org = Common
-			.readFile2Set(Common.dicPath + "propernames_org");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/propernames_org"));
 	public static HashSet<String> proper_other = Common
-			.readFile2Set(Common.dicPath + "propernames_other");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/propernames_other"));
 	public static HashSet<String> proper_people = Common
-			.readFile2Set(Common.dicPath + "propernames_people");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/propernames_people"));
 	public static HashSet<String> proper_place = Common
-			.readFile2Set(Common.dicPath + "propernames_place");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/propernames_place"));
 	public static HashSet<String> proper_press = Common
-			.readFile2Set(Common.dicPath + "propernames_press");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/propernames_press"));
 	public static HashSet<String> who_china = Common
-			.readFile2Set(Common.dicPath + "whoswho_china");
-	public static HashSet<String> who_intl = Common.readFile2Set(Common.dicPath
-			+ "whoswho_international");
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/whoswho_china"));
+	public static HashSet<String> who_intl = Common
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/whoswho_international"));
 
 	// generate IN_LOCATION_NAME(c-1c0), IN_LOCATION_NAME(c0c1) features, and
 	// other dic features
@@ -237,8 +247,9 @@ public class ACECommon {
 		}
 	}
 
-	public static HashSet<String> suffixes = Common.readFile2Set(Common.dicPath
-			+ "location_suffix");
+	public static HashSet<String> suffixes = Common
+			.readFile2Set(ACECommon.class
+					.getResourceAsStream("/dict/location_suffix"));
 
 	// generate ACE location_suffix features
 	public static void genLocationSuffixFea(ArrayList<MentionInstance> instances) {
@@ -298,10 +309,12 @@ public class ACECommon {
 	public static void genACEBoundPOSFea(ArrayList<MentionInstance> instances,
 			ArrayList<ParseResult> prs) {
 		if (POS09DIC == null) {
-			POS09DIC = Common.readFile2Map2(Common.dicPath + "09POSDIC");
+			POS09DIC = Common.readFile2Map2(ACECommon.class
+					.getResourceAsStream("/dict/09POSDIC"));
 		}
 		if (POS10DIC == null) {
-			POS10DIC = Common.readFile2Map2(Common.dicPath + "10POSDIC");
+			POS10DIC = Common.readFile2Map2(ACECommon.class
+					.getResourceAsStream("/dict/10POSDIC"));
 			;
 		}
 		for (ParseResult pr : prs) {
@@ -340,8 +353,8 @@ public class ACECommon {
 		}
 	}
 
-	public static HashSet<String> surnames = Common.readSurname(Common.dicPath
-			+ "surname");
+	public static HashSet<String> surnames = Common.readSurname(ACECommon.class
+			.getResourceAsStream("/dict/surname"));
 
 	// generate surname features, whether this word can be used as a chinese
 	// surname
@@ -354,8 +367,8 @@ public class ACECommon {
 		}
 	}
 
-	public static HashSet<String> pronouns = Common.readFile2Set(Common.dicPath
-			+ "pronoun");
+	public static HashSet<String> pronouns = Common
+			.readFile2Set(ACECommon.class.getResourceAsStream("/dict/pronoun"));
 
 	// generate pronoun features, c0, c-1c0, c0c1
 	public static void genPronounFea(ArrayList<MentionInstance> instances) {
@@ -427,8 +440,9 @@ public class ACECommon {
 		}
 		return currentArrayList;
 	}
-	
-	public static int[] findParseFilePosition(EntityMention em, String content, ArrayList<ParseResult> parseResults) {
+
+	public static int[] findParseFilePosition(EntityMention em, String content,
+			ArrayList<ParseResult> parseResults) {
 		// sentenceIdx, startWordIdx, startCharIdx, endWordIdx, endCharIdx
 		int position[] = new int[5];
 		int start = em.getS();
@@ -459,7 +473,7 @@ public class ACECommon {
 						// endCharIdx==word.length()) {
 						// wholeWord = true;
 						// }
-						//						
+						//
 						break;
 					}
 				}

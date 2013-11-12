@@ -1,11 +1,7 @@
 package util.ace;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +12,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import mention.Element;
 import mention.Entity;
+import mention.EntityMention;
 import mention.Instance;
 import mention.MentionInstance;
 import model.syntaxTree.MyTreeNode;
@@ -24,7 +21,6 @@ import org.xml.sax.InputSource;
 
 import util.Common;
 import ACE.ParseResult;
-import ACE.PlainText;
 
 public class ACECommon {
 
@@ -90,41 +86,6 @@ public class ACECommon {
 			e.printStackTrace();
 		}
 		return entities;
-	}
-
-	public static PlainText getPlainText(String sgmFn) {
-		PlainText sgm = new PlainText();
-		// fix the bug: there may be a newline character in the head of file
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(sgmFn));
-			String line = "";
-			while ((line = br.readLine()) != null) {
-				if (line.trim().isEmpty()) {
-					sgm.content += "\n";
-				} else {
-					break;
-				}
-			}
-			br.close();
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		try {
-			InputStream inputStream = new FileInputStream(new File(sgmFn));
-			SAXParserFactory sf = SAXParserFactory.newInstance();
-			SAXParser sp = sf.newSAXParser();
-			SGMXMLReader reader = new SGMXMLReader(sgm);
-			sp.parse(new InputSource(inputStream), reader);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		sgm.content = sgm.content.replace("&", "&amp;").replace("•", "&#8226;");
-		return sgm;
 	}
 
 	public static ArrayList<String> getACEFiles(String postfix) {
@@ -360,7 +321,7 @@ public class ACECommon {
 				if (POS10 == null) {
 					POS10 = "NULL";
 				}
-				
+
 				instances.get(start).setPosFea("B-" + POS);
 				instances.get(start).setPOS09("B-" + POS09);
 				instances.get(start).setPOS10("B-" + POS10);
@@ -371,8 +332,8 @@ public class ACECommon {
 					instances.get(m).setPOS09("I-" + POS09);
 					instances.get(m).setPOS10("I-" + POS10);
 				}
-				
-				if(end>start+1) {
+
+				if (end > start + 1) {
 					instances.get(end - 1).setRightBound(1);
 				}
 			}
@@ -418,25 +379,119 @@ public class ACECommon {
 		}
 	}
 
-	public static ArrayList<ArrayList<Element>> getPredictNerElements(
-			ArrayList<String> files, String crfFilePath) {
-		ArrayList<ArrayList<Element>> elementses = new ArrayList<ArrayList<Element>>();
-		elementses = getSemanticsFromCRFFile(files, crfFilePath);
-		return elementses;
+	// public static ArrayList<ArrayList<Element>> getPredictNerElements(
+	// ArrayList<String> files, String crfFilePath) {
+	// ArrayList<ArrayList<Element>> elementses = new
+	// ArrayList<ArrayList<Element>>();
+	// elementses = getSemanticsFromCRFFile(files, crfFilePath);
+	// return elementses;
+	// }
+
+	// get all mentions from CRF predicted files
+	public static ArrayList<EntityMention> getMentionsFromCRFFile(
+			String crfFile, String content) {
+		ArrayList<String> lines = Common.getLines(crfFile);
+		int idx = -1;
+		int start = 0;
+		int end = 0;
+		int lastIdx = 0;
+		ArrayList<EntityMention> currentArrayList = new ArrayList<EntityMention>();
+		for (int i = 0; i < lines.size();) {
+			String line = lines.get(i);
+			if (line.trim().isEmpty()) {
+				i++;
+				continue;
+			}
+
+			idx = content.indexOf(line.charAt(0), idx + 1);
+			// System.out.println(line);
+			i++;
+			if (line.endsWith("B")) {
+				start = idx;
+				while (true) {
+					lastIdx = idx;
+					if (!lines.get(i).endsWith("I") || lines.get(i).isEmpty()) {
+						break;
+					}
+					idx = content
+							.indexOf(lines.get(i++).charAt(0), lastIdx + 1);
+				}
+				end = lastIdx;
+				EntityMention em = new EntityMention();
+				// using head to do co-reference
+				em.head = content.substring(start, end + 1);
+				em.headStart = start;
+				em.headEnd = end;
+				currentArrayList.add(em);
+			}
+		}
+		return currentArrayList;
 	}
 	
+	public static int[] findParseFilePosition(EntityMention em, String content, ArrayList<ParseResult> parseResults) {
+		// sentenceIdx, startWordIdx, startCharIdx, endWordIdx, endCharIdx
+		int position[] = new int[5];
+		int start = em.getS();
+		int end = em.getE();
+		int idx = -1;
+		int startWordIdx = 0;
+		int startCharIdx = 0;
+		int endWordIdx = 0;
+		int endCharIdx = 0;
+		int sentenceIdx = 0;
+		boolean find = false;
+		for (int i = 0; i < parseResults.size(); i++) {
+			ArrayList<String> words = parseResults.get(i).words;
+			for (int j = 1; j < words.size(); j++) {
+				String word = words.get(j);
+				int k = 0;
+				for (; k < word.length(); k++) {
+					idx = content.indexOf(word.charAt(k), idx + 1);
+					if (idx == start) {
+						startWordIdx = j;
+						startCharIdx = k;
+					}
+					if (idx == end) {
+						endWordIdx = j;
+						endCharIdx = k;
+						find = true;
+						// if(startWordIdx==endWordIdx && startCharIdx==0 &&
+						// endCharIdx==word.length()) {
+						// wholeWord = true;
+						// }
+						//						
+						break;
+					}
+				}
+				if (find) {
+					break;
+				}
+			}
+			if (find) {
+				sentenceIdx = i;
+				break;
+			}
+		}
+		position[0] = sentenceIdx;
+		position[1] = startWordIdx;
+		position[2] = startCharIdx;
+		position[3] = endWordIdx;
+		position[4] = endCharIdx;
+		return position;
+	}
+
 	// get all semantic class from CRF predicted files
-	public static ArrayList<Element> getSemanticsFromOneCRFFile(
-			String crfFile, String content) {
+	public static ArrayList<Element> getSemanticsFromOneCRFFile(String crfFile,
+			String content) {
 		// System.out.println(crfFile);
 		ArrayList<String> lines = Common.getLines(crfFile);
 
 		int start = 0;
 		int end = 0;
 		int lastIdx = 0;
-		
+
 		int idx = 0;
-		
+
 		ArrayList<Element> currentArrayList = new ArrayList<Element>();
 		for (int i = 0; i < lines.size();) {
 			String line = lines.get(i);
@@ -495,88 +550,89 @@ public class ACECommon {
 	}
 
 	// get all semantic class from CRF predicted files
-	public static ArrayList<ArrayList<Element>> getSemanticsFromCRFFile(
-			ArrayList<String> files, String crfFile) {
-		// System.out.println(crfFile);
-		ArrayList<ArrayList<Element>> entityMentionses = new ArrayList<ArrayList<Element>>();
-		ArrayList<String> lines = Common.getLines(crfFile);
-		int fileIdx = 0;
-		PlainText sgm = ACECommon.getPlainText(files.get(fileIdx));
-		// System.out.println(files.get(fileIdx));
-		int idx = sgm.start - 1;
-		String content = sgm.content;
-		int start = 0;
-		int end = 0;
-		int lastIdx = 0;
-		ArrayList<Element> currentArrayList = new ArrayList<Element>();
-		entityMentionses.add(currentArrayList);
-		for (int i = 0; i < lines.size();) {
-			String line = lines.get(i);
-			if (line.trim().isEmpty() || (line.charAt(0) == '#')
-					&& line.split("\\s+").length == 2) {
-				i++;
-				continue;
-			}
-			String tokens[] = line.trim().split("\\s+");
-			String predict = tokens[tokens.length - 1];
-			idx = content.indexOf(line.charAt(0), idx + 1);
-			// System.out.println(line);
-			if (idx == -1) {
-				fileIdx++;
-				currentArrayList = new ArrayList<Element>();
-				entityMentionses.add(currentArrayList);
-				// System.out.println(files.get(fileIdx));
-				// System.out.println(line);
-				sgm = ACECommon.getPlainText(files.get(fileIdx));
-
-				idx = sgm.start - 1;
-				content = sgm.content;
-				continue;
-			}
-			i++;
-			double totalConfidence = 0;
-			int pos = predict.lastIndexOf('/');
-			if (pos > 0) {
-				totalConfidence += Double.parseDouble(predict
-						.substring(pos + 1));
-			}
-			String type = "";
-			if (predict.startsWith("B")) {
-				start = idx;
-				if (pos > 0) {
-					type = predict.substring(2, pos);
-				} else {
-					type = predict.substring(2);
-				}
-
-				while (true) {
-					lastIdx = idx;
-					line = lines.get(i);
-					tokens = line.trim().split("\\s+");
-					predict = tokens[tokens.length - 1];
-					if (!predict.startsWith("I") || lines.get(i).isEmpty()
-							|| (line.charAt(0) == '#')
-							&& line.split("\\s+").length == 2) {
-						break;
-					}
-					pos = predict.lastIndexOf('/');
-					if (pos > 0) {
-						totalConfidence += Double.parseDouble(predict
-								.substring(pos + 1));
-					}
-					idx = content
-							.indexOf(lines.get(i++).charAt(0), lastIdx + 1);
-				}
-				end = lastIdx;
-
-				Element em = new Element(start, end, type.replace("_", ""));
-				em.confidence = totalConfidence / ((double) (end + 1 - start));
-
-				currentArrayList.add(em);
-			}
-		}
-		return entityMentionses;
-	}
+	// public static ArrayList<ArrayList<Element>> getSemanticsFromCRFFile(
+	// ArrayList<String> files, String crfFile) {
+	// // System.out.println(crfFile);
+	// ArrayList<ArrayList<Element>> entityMentionses = new
+	// ArrayList<ArrayList<Element>>();
+	// ArrayList<String> lines = Common.getLines(crfFile);
+	// int fileIdx = 0;
+	// PlainText sgm = ACECommon.getPlainText(files.get(fileIdx));
+	// // System.out.println(files.get(fileIdx));
+	// int idx = sgm.start - 1;
+	// String content = sgm.content;
+	// int start = 0;
+	// int end = 0;
+	// int lastIdx = 0;
+	// ArrayList<Element> currentArrayList = new ArrayList<Element>();
+	// entityMentionses.add(currentArrayList);
+	// for (int i = 0; i < lines.size();) {
+	// String line = lines.get(i);
+	// if (line.trim().isEmpty() || (line.charAt(0) == '#')
+	// && line.split("\\s+").length == 2) {
+	// i++;
+	// continue;
+	// }
+	// String tokens[] = line.trim().split("\\s+");
+	// String predict = tokens[tokens.length - 1];
+	// idx = content.indexOf(line.charAt(0), idx + 1);
+	// // System.out.println(line);
+	// if (idx == -1) {
+	// fileIdx++;
+	// currentArrayList = new ArrayList<Element>();
+	// entityMentionses.add(currentArrayList);
+	// // System.out.println(files.get(fileIdx));
+	// // System.out.println(line);
+	// sgm = ACECommon.getPlainText(files.get(fileIdx));
+	//
+	// idx = sgm.start - 1;
+	// content = sgm.content;
+	// continue;
+	// }
+	// i++;
+	// double totalConfidence = 0;
+	// int pos = predict.lastIndexOf('/');
+	// if (pos > 0) {
+	// totalConfidence += Double.parseDouble(predict
+	// .substring(pos + 1));
+	// }
+	// String type = "";
+	// if (predict.startsWith("B")) {
+	// start = idx;
+	// if (pos > 0) {
+	// type = predict.substring(2, pos);
+	// } else {
+	// type = predict.substring(2);
+	// }
+	//
+	// while (true) {
+	// lastIdx = idx;
+	// line = lines.get(i);
+	// tokens = line.trim().split("\\s+");
+	// predict = tokens[tokens.length - 1];
+	// if (!predict.startsWith("I") || lines.get(i).isEmpty()
+	// || (line.charAt(0) == '#')
+	// && line.split("\\s+").length == 2) {
+	// break;
+	// }
+	// pos = predict.lastIndexOf('/');
+	// if (pos > 0) {
+	// totalConfidence += Double.parseDouble(predict
+	// .substring(pos + 1));
+	// }
+	// idx = content
+	// .indexOf(lines.get(i++).charAt(0), lastIdx + 1);
+	// }
+	// end = lastIdx;
+	//
+	// Element em = new Element(start, end, type.replace("_", ""));
+	// em.confidence = totalConfidence / ((double) (end + 1 - start));
+	//
+	// currentArrayList.add(em);
+	// }
+	// }
+	// return entityMentionses;
+	// }
 
 	// public static ArrayList<Element> getPredictNerElements(String sgmFn,
 	// PlainText sgm) {
@@ -638,7 +694,8 @@ public class ACECommon {
 	// return elements;
 	// }
 
-	public static void genACENerFea(ArrayList<MentionInstance> instances, ArrayList<Element> elements) {
+	public static void genACENerFea(ArrayList<MentionInstance> instances,
+			ArrayList<Element> elements) {
 		for (Element element : elements) {
 			((MentionInstance) instances.get(element.getStart()))
 					.setNerFea("B-" + element.getContent());

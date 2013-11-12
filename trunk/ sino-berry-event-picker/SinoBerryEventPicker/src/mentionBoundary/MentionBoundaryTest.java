@@ -27,14 +27,13 @@ public class MentionBoundaryTest {
 	public static void produceInstance(String filename, String feaFile) {
 		System.out.println(filename);
 
-		int a = filename.lastIndexOf(".");
-		String stem = filename.substring(0, a);
-		String nerFile = stem + ".ner";
-		
-		ArrayList<ArrayList<Element>> nerElementses = ACECommon.getPredictNerElements(files, nerFile);
-		
 		String content = Common.getFileContent(filename);
-		
+
+		String nerFile = filename + ".ner";
+
+		ArrayList<Element> nerElementses = ACECommon
+				.getSemanticsFromOneCRFFile(nerFile, content);
+
 		ArrayList<MentionInstance> instances = new ArrayList<MentionInstance>();
 		for (int i = 0; i < content.length(); i++) {
 			MentionInstance instance = new MentionInstance(content.substring(i,
@@ -44,8 +43,8 @@ public class MentionBoundaryTest {
 
 		ArrayList<ParseResult> parseResults = StanfordXMLReader.readPR(filename
 				+ ".xml", content);
-		
-		ACECommon.genACENerFea(instances, sgmFn, nerElementses.get(idx));
+
+		ACECommon.genACENerFea(instances, nerElementses);
 
 		ACECommon.genACENounPhraseFea(instances, parseResults);
 		ACECommon.genPronounFea(instances);

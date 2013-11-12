@@ -361,8 +361,6 @@ public class ACECommon {
 					POS10 = "NULL";
 				}
 				
-				System.out.println(POS + "#" + POS09 + "#" + POS10);
-				
 				instances.get(start).setPosFea("B-" + POS);
 				instances.get(start).setPOS09("B-" + POS09);
 				instances.get(start).setPOS10("B-" + POS10);
@@ -425,6 +423,75 @@ public class ACECommon {
 		ArrayList<ArrayList<Element>> elementses = new ArrayList<ArrayList<Element>>();
 		elementses = getSemanticsFromCRFFile(files, crfFilePath);
 		return elementses;
+	}
+	
+	// get all semantic class from CRF predicted files
+	public static ArrayList<Element> getSemanticsFromOneCRFFile(
+			String crfFile, String content) {
+		// System.out.println(crfFile);
+		ArrayList<String> lines = Common.getLines(crfFile);
+
+		int start = 0;
+		int end = 0;
+		int lastIdx = 0;
+		
+		int idx = 0;
+		
+		ArrayList<Element> currentArrayList = new ArrayList<Element>();
+		for (int i = 0; i < lines.size();) {
+			String line = lines.get(i);
+			if (line.trim().isEmpty() || (line.charAt(0) == '#')
+					&& line.split("\\s+").length == 2) {
+				i++;
+				continue;
+			}
+			String tokens[] = line.trim().split("\\s+");
+			String predict = tokens[tokens.length - 1];
+			idx = content.indexOf(line.charAt(0), idx + 1);
+			// System.out.println(line);
+			i++;
+			double totalConfidence = 0;
+			int pos = predict.lastIndexOf('/');
+			if (pos > 0) {
+				totalConfidence += Double.parseDouble(predict
+						.substring(pos + 1));
+			}
+			String type = "";
+			if (predict.startsWith("B")) {
+				start = idx;
+				if (pos > 0) {
+					type = predict.substring(2, pos);
+				} else {
+					type = predict.substring(2);
+				}
+
+				while (true) {
+					lastIdx = idx;
+					line = lines.get(i);
+					tokens = line.trim().split("\\s+");
+					predict = tokens[tokens.length - 1];
+					if (!predict.startsWith("I") || lines.get(i).isEmpty()
+							|| (line.charAt(0) == '#')
+							&& line.split("\\s+").length == 2) {
+						break;
+					}
+					pos = predict.lastIndexOf('/');
+					if (pos > 0) {
+						totalConfidence += Double.parseDouble(predict
+								.substring(pos + 1));
+					}
+					idx = content
+							.indexOf(lines.get(i++).charAt(0), lastIdx + 1);
+				}
+				end = lastIdx;
+
+				Element em = new Element(start, end, type.replace("_", ""));
+				em.confidence = totalConfidence / ((double) (end + 1 - start));
+
+				currentArrayList.add(em);
+			}
+		}
+		return currentArrayList;
 	}
 
 	// get all semantic class from CRF predicted files
@@ -571,8 +638,7 @@ public class ACECommon {
 	// return elements;
 	// }
 
-	public static void genACENerFea(ArrayList<MentionInstance> instances,
-			String sgmFn, ArrayList<Element> elements) {
+	public static void genACENerFea(ArrayList<MentionInstance> instances, ArrayList<Element> elements) {
 		for (Element element : elements) {
 			((MentionInstance) instances.get(element.getStart()))
 					.setNerFea("B-" + element.getContent());

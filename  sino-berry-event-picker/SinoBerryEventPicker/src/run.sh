@@ -21,3 +21,13 @@ cd /users/yzcchen/tool/CRF/CRF++-0.54
 
 cd /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src
 
+java SVMSemantic/SemanticTestMulti input.txt
+
+cd /users/yzcchen/tool/svm_multiclass
+
+./svm_multiclass_classify /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src/input.txt.mention.type.svm /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src/lm/type.model /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src/input.txt.mention.type.predict
+./svm_multiclass_classify /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src/input.txt.mention.type.svm /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src/lm/subtype.model /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src/input.txt.mention.subtype.predict
+
+cd /users/yzcchen/chen3/sinoBerryEventPicker/SinoBerryEventPicker/src
+
+

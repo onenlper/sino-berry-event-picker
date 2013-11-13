@@ -60,9 +60,8 @@ public class SVMSemanticFeature {
 		subTypes2.put("per", str5);
 		subTypes2.put("veh", str6);
 		subTypes2.put("wea", str7);
-		loc_suffix
-				.addAll(Common
-						.getLines(ACECommon.class.getResourceAsStream("/dict/loc_suffix")));
+		loc_suffix.addAll(Common.getLines(ACECommon.class
+				.getResourceAsStream("/dict/loc_suffix")));
 	}
 
 	public static HashMap<String, String[]> subTypes2;
@@ -101,7 +100,8 @@ public class SVMSemanticFeature {
 	}
 
 	public static String semanticFeature(EntityMention em, boolean train,
-			String content, int label, ArrayList<Element> eles, ArrayList<ParseResult> parseResults) {
+			String content, int label, ArrayList<Element> eles,
+			ArrayList<ParseResult> parseResults) {
 		em.head = em.head.replace("\n", "");
 		String head = em.head;
 		ArrayList<Fea> allFeas = new ArrayList<Fea>();
@@ -289,8 +289,10 @@ public class SVMSemanticFeature {
 	public static HashSet<String> loc_suffix = new HashSet<String>();
 
 	private static String getSemanticSymbol(EntityMention em,
-			ArrayList<Element> eles, String content, ArrayList<ParseResult> parseResults) {
-		int[] position = ACECommon.findParseFilePosition(em, content, parseResults);
+			ArrayList<Element> eles, String content,
+			ArrayList<ParseResult> parseResults) {
+		int[] position = ACECommon.findParseFilePosition(em, content,
+				parseResults);
 		em.head = em.head.replace("\n", "");
 		ParseResult pr = parseResults.get(position[0]);
 		String head = pr.words.get(position[3]).replace("\n", "");

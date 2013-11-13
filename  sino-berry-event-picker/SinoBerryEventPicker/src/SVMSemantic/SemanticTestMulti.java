@@ -33,23 +33,12 @@ public class SemanticTestMulti {
 
 		CRFMention crfMention = new CRFMention(filename + ".mention", content);
 		ArrayList<EntityMention> ems = crfMention.getMentions();
-		SVMSemanticFeature.semDicFeatures = Common.readFile2Map("semantic_dic"
-				+ args[0]);
-		SVMSemanticFeature.charFeatures = Common.readFile2Map("semantic_char"
-				+ args[0]);
-		String test[] = new String[1];
-		test[0] = args[0];
-		String baseFolder = "/users/yzcchen/ACL12/model/ACE2005/semantic3/";
+		SVMSemanticFeature.semDicFeatures = Common.readFile2Map("lm/semantic_dic1");
+		SVMSemanticFeature.charFeatures = Common.readFile2Map("lm/semantic_char1");
 
-		FileWriter mentionFw = new FileWriter(baseFolder + "mention.test"
-				+ args[0]);
-
-		FileWriter typeFw = new FileWriter(baseFolder + "multiType.test"
-				+ args[0]);
-
-		FileWriter subTypeFw = new FileWriter(baseFolder + "multiSubType"
-				+ ".test" + args[0]);
-
+		FileWriter mentionFw = new FileWriter(filename + ".mention");
+		FileWriter typeFw = new FileWriter(filename + ".mention.type.svm");
+		
 		// gold mentions
 		// ArrayList<EntityMention> ems = new ArrayList<EntityMention>();
 		// for (Entity en : entities) {
@@ -66,12 +55,9 @@ public class SemanticTestMulti {
 					0, ner, parseResults);
 
 			typeFw.write("1 " + str + "\n");
-			subTypeFw.write("1 " + str + "\n");
 			mentionFw.write(em.headStart + "," + em.headEnd + " " + "\n");
 		}
 		mentionFw.close();
-
 		typeFw.close();
-		subTypeFw.close();
 	}
 }
